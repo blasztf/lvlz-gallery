@@ -93,7 +93,7 @@ public class CacheControl {
 
   public <T extends CacheControl.CacheImpl> T load(long pointer, T obj) {
 
-    if (exists()) {
+    if (contains(pointer)) {
 
       File mStoreFile = new File(mCacheBase, getName(pointer));
 
