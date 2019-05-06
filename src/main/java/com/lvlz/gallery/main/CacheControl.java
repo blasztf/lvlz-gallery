@@ -51,7 +51,7 @@ public class CacheControl {
 
   public boolean contains(long pointer) {
 
-     return FileUtils.directoryContains(mCacheBase, getName(pointer));
+     return FileUtils.directoryContains(mCacheBase, new File(getName(pointer)));
 
   }
 
@@ -83,7 +83,7 @@ public class CacheControl {
 
       FileUtils.cleanDirectory(mCacheBase);
 
-      FileUtils.writeStringToFile(new File(mCacheBase, CACHE_TIME), System.currentTimeMillis()); 
+      FileUtils.writeStringToFile(new File(mCacheBase, CACHE_TIME), System.currentTimeMillis() + ""); 
 
     }
       
