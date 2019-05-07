@@ -151,7 +151,7 @@ public class CacheControl {
 
       }
 
-      return cache == null ? cache : obj.decodeCache(cache);
+      return cache == null ? null : obj.decodeCache(cache);
 
     }
     else {
