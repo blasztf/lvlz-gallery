@@ -1,6 +1,8 @@
 package com.lvlz.gallery.main;
 
 import java.io.File;
+import java.io.IOException;
+
 import org.apache.commons.io.FileUtils;
 
 public class CacheControl {
@@ -50,8 +52,24 @@ public class CacheControl {
   }
 
   public boolean contains(long pointer) {
+    
+    boolean result = false;
 
-     return FileUtils.directoryContains(mCacheBase, new File(getName(pointer)));
+    try {
+       
+      result = FileUtils.directoryContains(mCacheBase, new File(getName(pointer)));
+
+    }
+    catch (IOException e) {
+
+      result = false;
+
+      DebugControl.process(e); 
+
+    }
+    
+
+    return result;
 
   }
 
@@ -64,7 +82,19 @@ public class CacheControl {
 
     if (mStoreFile.exists() && mStoreFile.isFile()) {
 
-      lastTime = Long.parseLong(FileUtils.readFileToString(mStoreFile, "UTF-8"));
+      try {
+
+        lastTime = Long.parseLong(FileUtils.readFileToString(mStoreFile, "UTF-8"));
+
+      }
+      catch (IOException e) {
+
+        lastTime = currTime;
+
+        DebugControl.process(e);
+
+      }
+
       if ((currTime - lastTime) < CACHE_EXPIRE) {
 
         return false;
@@ -79,15 +109,24 @@ public class CacheControl {
 
   public void cache(long pointer, CacheControl.CacheImpl obj) {
 
-    if (expired()) {
+    try {
 
-      FileUtils.cleanDirectory(mCacheBase);
+      if (expired()) {
 
-      FileUtils.writeStringToFile(new File(mCacheBase, CACHE_TIME), System.currentTimeMillis() + ""); 
+        FileUtils.cleanDirectory(mCacheBase);
+
+        FileUtils.writeStringToFile(new File(mCacheBase, CACHE_TIME), System.currentTimeMillis() + "");
+
+      }
+      
+      FileUtils.writeStringToFile(new File(mCacheBase, getName(pointer)), obj.encodeCache());
 
     }
-      
-    FileUtils.writeStringToFile(new File(mCacheBase, getName(pointer)), obj.encodeCache());
+    catch (IOException e) {
+
+      DebugControl.process(e);
+
+    }
 
   }
 
@@ -97,9 +136,22 @@ public class CacheControl {
 
       File mStoreFile = new File(mCacheBase, getName(pointer));
 
-      String cache = FileUtils.readFileToString(mStoreFile, "UTF-8");
+      String cache = null;
+      
+      try {
+        
+        cache = FileUtils.readFileToString(mStoreFile, "UTF-8");
 
-      return obj.decodeCache(cache);
+      }
+      catch (IOException e) {
+
+        cache = null;
+
+        DebugControl.process(e);
+
+      }
+
+      return cache == null ? cache : obj.decodeCache(cache);
 
     }
     else {
