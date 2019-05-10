@@ -35,13 +35,13 @@ public class TagList<T> extends ArrayList<T> {
 
     tag = tag.toLowerCase();
 
-    for (TagList<String> listTag : mInstance.mList) {
+    for (int i = 0; i < mInstance.mList.size(); i++) {
 
-      for (String iTag : listTag) {
+      for (int j = 0; j < mInstance.mList.get(i).size(); j++)) {
 
-        if (tag.equals(iTag)) {
+        if (tag.equals(mInstance.mList.get(i).get(j))) {
 
-          return listTag;
+          return mInstance.mList.get(i);
         
         }
 
