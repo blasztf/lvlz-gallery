@@ -37,7 +37,7 @@ public class TagList<T> extends ArrayList<T> {
 
     for (int i = 0; i < mInstance.mList.size(); i++) {
 
-      for (int j = 0; j < mInstance.mList.get(i).size(); j++)) {
+      for (int j = 0; j < mInstance.mList.get(i).size(); j++) {
 
         if (tag.equals(mInstance.mList.get(i).get(j))) {
 
