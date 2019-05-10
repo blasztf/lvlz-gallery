@@ -2,6 +2,8 @@ package com.lvlz.gallery.data.filter;
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.lang.Override;
 
 public class TagList<T> extends ArrayList<T> {
 
@@ -48,6 +50,13 @@ public class TagList<T> extends ArrayList<T> {
     }
 
     return new TagList<String>();
+
+  }
+
+  @Override
+  public TagList(Collection<? extends T> c) {
+    
+    super(c);
 
   }
 
