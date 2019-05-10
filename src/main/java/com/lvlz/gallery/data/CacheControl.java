@@ -16,7 +16,7 @@ import org.apache.commons.io.FileUtils;
 
 public class CacheControl {
 
-  private static final String CACHE_DIR = ".cache" + File.pathSeparator;
+  private static final String CACHE_DIR = ".cache" + File.separator;
 
   private static final String CACHE_PREFIX = "data-";
   private static final String CACHE_SUFFIX = ".lyz";
@@ -32,7 +32,7 @@ public class CacheControl {
 
   public CacheControl() {
 
-    this(System.getProperty("user.dir") + File.pathSeparator + CACHE_DIR);
+    this(System.getProperty("user.dir") + File.separator + CACHE_DIR);
 
   }
 
