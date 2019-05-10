@@ -17,7 +17,7 @@ public class TagList<T> extends ArrayList<T> {
 
       mInstance = new TagList<TagList<String>>();
 
-      mInstance.generate();
+      generate();
 
     }
 
@@ -67,7 +67,7 @@ public class TagList<T> extends ArrayList<T> {
 
   }
 
-  private void generate() {
+  private static void generate() {
 
     TagList<String> iList;
     String[] pList;
@@ -83,7 +83,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
 	  pList = new String[] {
 		  "jiae",
@@ -95,7 +95,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
 	  pList = new String[] {
 		  "jisoo",
@@ -108,7 +108,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
 	  pList = new String[] {
 		  "mijoo",
@@ -121,7 +121,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
 	  pList = new String[] {
 		  "kei",
@@ -132,7 +132,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
 	  pList = new String[] {
 		  "jin",
@@ -144,7 +144,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
 	  pList = new String[] {
 		  "sujeong",
@@ -157,7 +157,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
 	  pList = new String[] {
 		  "yein",
@@ -169,7 +169,7 @@ public class TagList<T> extends ArrayList<T> {
 
     iList = new TagList<String>(Arrays.asList(pList));
 
-    add(iList);
+    mInstance.add(iList);
 
   }
 
