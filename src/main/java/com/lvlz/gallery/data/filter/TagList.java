@@ -7,7 +7,7 @@ import java.lang.Override;
 
 public class TagList<T> extends ArrayList<T> {
 
-  private TagList<TagList<String>> list;
+  private TagList<TagList<String>> mList;
 
   public static TagList mInstance;
 
@@ -35,7 +35,7 @@ public class TagList<T> extends ArrayList<T> {
 
     tag = tag.toLowerCase();
 
-    for (TagList<String> listTag : mInstance.list) {
+    for (TagList<String> listTag : mInstance.mList) {
 
       for (String iTag : listTag) {
 
