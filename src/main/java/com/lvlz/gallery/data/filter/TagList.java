@@ -7,7 +7,7 @@ import java.lang.Override;
 
 public class TagList<T> extends ArrayList<T> {
 
-  private TagList<String> mList = new TagList<String>();
+  private TagList<TagList<String>> mList = new TagList<TagList<String>>();
 
   public static TagList mInstance;
 
@@ -35,13 +35,13 @@ public class TagList<T> extends ArrayList<T> {
 
     tag = tag.toLowerCase();
 
-    for (int i = 0; i < mInstance.mList.size(); i++) {
+    for (TagList<String> listTag : mInstance.mList) {
 
-      for (int j = 0; j < mInstance.mList.get(i).size(); j++) {
+      for (String iTag : listTag) {
 
-        if (tag.equals(mInstance.mList.get(i).get(j))) {
+        if (tag.equals(iTag)) {
 
-          return mInstance.mList.get(i);
+          return listTag;
         
         }
 
