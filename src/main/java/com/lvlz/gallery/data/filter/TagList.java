@@ -76,7 +76,7 @@ public class TagList<T> extends ArrayList<T> {
 	    "이수정"
     };
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
@@ -88,7 +88,7 @@ public class TagList<T> extends ArrayList<T> {
 	  	"지애"
   	};
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
@@ -101,7 +101,7 @@ public class TagList<T> extends ArrayList<T> {
 		  "지수"
   	};
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
@@ -114,7 +114,7 @@ public class TagList<T> extends ArrayList<T> {
 		  "미주"
 	  };
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
@@ -125,7 +125,7 @@ public class TagList<T> extends ArrayList<T> {
 		  "킴지연"
 	  };
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
@@ -137,7 +137,7 @@ public class TagList<T> extends ArrayList<T> {
 		  "박명은"
 	  };
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
@@ -150,7 +150,7 @@ public class TagList<T> extends ArrayList<T> {
 		  "수정"
 	  };
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
@@ -162,7 +162,7 @@ public class TagList<T> extends ArrayList<T> {
 		  "예인"
   	};
 
-    iList = Arrays.asList(pList);
+    iList = new TagList<String>(Arrays.asList(pList));
 
     list.add(iList);
 
