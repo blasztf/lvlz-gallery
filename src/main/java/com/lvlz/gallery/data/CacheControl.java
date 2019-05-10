@@ -12,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
+import java.util.ArrayList;
+
 import org.apache.commons.io.FileUtils;
 
 public class CacheControl {
@@ -50,6 +52,8 @@ public class CacheControl {
 
     mKryo.register(CacheImpl.class);
     mKryo.register(DataResult.class);
+    mKryo.register(ArrayList.class);
+    mKryo.register(Data.class);
 
   }
 
