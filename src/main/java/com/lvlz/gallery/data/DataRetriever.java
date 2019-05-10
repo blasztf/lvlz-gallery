@@ -190,7 +190,7 @@ public class DataRetriever {
 
       try {
 
-        response = Jsoup.connect(mDataSource.url).userAgent(mOptions.userAgent).header("referer", mOptions.referer).execute().body();
+        response = Jsoup.connect(mDataSource.url).validateTLSCertificates(false).userAgent(mOptions.userAgent).header("referer", mOptions.referer).execute().body();
 
         formatResponse = format(response);
 
