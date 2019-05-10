@@ -49,6 +49,7 @@ public class CacheControl {
     }
 
     mKryo.register(CacheImpl.class);
+    mKryo.register(DataResult.class);
 
   }
 
