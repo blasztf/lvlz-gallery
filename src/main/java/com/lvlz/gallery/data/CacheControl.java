@@ -53,7 +53,8 @@ public class CacheControl {
     mKryo.register(CacheImpl.class);
     mKryo.register(DataResult.class);
     mKryo.register(ArrayList.class);
-    mKryo.register(Data.class);
+    mKryo.register(DataResult.Data.class);
+
 
   }
 
