@@ -54,6 +54,14 @@ public class TagList<T> extends ArrayList<T> {
   }
 
   @Override
+  public TagList() {
+
+    super();
+
+  }
+
+
+  @Override
   public TagList(Collection<? extends T> c) {
     
     super(c);
