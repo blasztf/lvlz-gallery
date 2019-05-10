@@ -1,9 +1,9 @@
 package com.lvlz.gallery.data.filter;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.ArrayList;
 
-public class TagList<T> extends List<T> {
+public class TagList<T> extends ArrayList<T> {
 
   private TagList<TagList<String>> list;
 
