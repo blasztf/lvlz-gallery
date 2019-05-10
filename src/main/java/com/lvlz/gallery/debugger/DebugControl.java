@@ -1,4 +1,4 @@
-package com.lvlz.gallery.main;
+package com.lvlz.gallery.debugger;
 
 public class DebugControl {
 

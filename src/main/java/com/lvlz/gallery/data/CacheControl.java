@@ -1,7 +1,16 @@
-package com.lvlz.gallery.main;
+package com.lvlz.gallery.data;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import com.lvlz.gallery.debugger.DebugControl;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import org.apache.commons.io.FileUtils;
 
@@ -19,6 +28,8 @@ public class CacheControl {
   private File mCacheBase;
   private File mStoreFile;
 
+  private Kryo mKryo;
+
   public CacheControl() {
 
     this(System.getProperty("user.dir") + File.pathSeparator + CACHE_DIR);
@@ -29,19 +40,15 @@ public class CacheControl {
 
     mCacheBase = new File(path);
 
+    mKryo = new Kryo();
+
     if (!mCacheBase.exists() || !mCacheBase.isDirectory()) {
 
       mCacheBase.mkdirs();
 
     }
 
-  }
-
-  public static interface CacheImpl {
-
-    public String encodeCache();
-
-    public <T extends CacheImpl> T decodeCache(String cache);
+    mKryo.register(CacheImpl.class);
 
   }
 
@@ -107,11 +114,16 @@ public class CacheControl {
 
   }
 
-  public void cache(long pointer, CacheControl.CacheImpl obj) {
+  public void cache(long pointer, CacheImpl obj) {
+
+    RandomAccessFile raf = null;
+    Output output = null;
 
     try {
 
       if (expired()) {
+
+        mStoreFile = new File(mCacheBase, getName(pointer));
 
         FileUtils.cleanDirectory(mCacheBase);
 
@@ -119,10 +131,19 @@ public class CacheControl {
 
       }
       
-      FileUtils.writeStringToFile(new File(mCacheBase, getName(pointer)), obj.encodeCache());
+      //obj.encodeCache(mStoreFile);
+      
+      raf = new RandomAccessFile(mStoreFile, "rw");
+      output = new Output(new FileOutputStream(raf.getFD()));
+      mKryo.writeObject(output, obj);
+      output.close();
 
     }
     catch (IOException e) {
+
+      //if (raf != null) raf.close();
+
+      if (output != null) output.close();
 
       DebugControl.process(e);
 
@@ -130,28 +151,50 @@ public class CacheControl {
 
   }
 
-  public <T extends CacheControl.CacheImpl> T load(long pointer, T obj) {
+  public <T extends CacheImpl> T load(long pointer, Class<T> clazz) {
+
+    File mStoreFile = null;
+    Input input = null;
+    RandomAccessFile raf = null;
+    T returnedObject = null;
 
     if (contains(pointer)) {
 
-      File mStoreFile = new File(mCacheBase, getName(pointer));
-
-      String cache = null;
+      mStoreFile = new File(mCacheBase, getName(pointer));
       
       try {
         
-        cache = FileUtils.readFileToString(mStoreFile, "UTF-8");
+        if (!mStoreFile.exists() || !mStoreFile.isFile()) {
+        
+          throw new IOException(mStoreFile.getAbsolutePath() + " not exists!");
+
+        }
+        else {
+
+          raf = new RandomAccessFile(mStoreFile, "rw");
+
+          input = new Input(new FileInputStream(raf.getFD()));
+
+          returnedObject = mKryo.readObject(input, clazz);
+
+          input.close();
+
+        }
 
       }
       catch (IOException e) {
 
-        cache = null;
+        //if (raf != null) raf.close();
+
+        if (input != null) input.close();
+
+        mStoreFile = null;
 
         DebugControl.process(e);
 
       }
 
-      return cache == null ? null : obj.decodeCache(cache);
+      return returnedObject;
 
     }
     else {

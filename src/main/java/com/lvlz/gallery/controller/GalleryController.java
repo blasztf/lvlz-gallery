@@ -4,6 +4,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PathVariable;
+
+import com.lvlz.gallery.data.DataRetriever;
+import com.lvlz.gallery.data.filter.Filter;
+import com.lvlz.gallery.data.DataResult;
 import com.lvlz.gallery.model.Gallery;
 
 @RestController
@@ -17,32 +21,13 @@ public class GalleryController {
   }
 
   @RequestMapping(method=RequestMethod.GET, path="/member/{name}")
-  public Gallery member(@PathVariable String name) {
+  public DataResult member(@PathVariable String name, @RequestParam(value="next_pointer", defaultValue="0") long nextPointer) {
     
-    return findImages(name);
+    DataResult result = DataReteriever.with(nextPointer).retrieve();
 
-  }
+    result = Filter.with(result).find(name);
 
-  public Gallery findImages(String name) {
-
-    String[] images = findListImageByName(name);
-    long nextPointer = 12345678L;
-
-    return new Gallery(nextPointer, images);
-
-  }
-
-  private String[] findListImageByName(String name) {
-
-    String[] data = new String[10];
-    
-    for (int i = 0; i < 10; i++) {
-
-      data[i] = name + " " + i;
-
-    }
-
-    return data;
+    return result
 
   }
 
