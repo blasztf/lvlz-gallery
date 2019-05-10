@@ -7,7 +7,7 @@ import java.lang.Override;
 
 public class TagList<T> extends ArrayList<T> {
 
-  private TagList<TagList<String>> mList;
+   TagList<TagList<String>> mList;
 
   public static TagList mInstance;
 
