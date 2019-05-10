@@ -17,7 +17,7 @@ public class GalleryController {
   @RequestMapping("/")
   public String index() {
 
-    return "Selamat masuk ke index!";
+    return "Lovelyz, when you reply to my tweet in MenPa...?";
 
   }
 
