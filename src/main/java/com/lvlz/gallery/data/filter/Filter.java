@@ -57,6 +57,7 @@ public class Filter {
         pass = false;
         data = mDataResult.dataCollections.get(i);
 
+        tagloop:
         for (String tag : data.tags) {
 
           for (String alias : aliases) {
@@ -65,7 +66,7 @@ public class Filter {
 
               pass = true;
             
-              break 2;
+              break tagloop;
 
             }
 
