@@ -40,10 +40,12 @@ public class Filter {
   public DataResult find(String member) {
 
     DataResult result;
+    boolean pass;
+    Data data;
 
     TagList<String> aliases = TagList.get(member);
 
-    if (member == null || member.equals("lovelyz") || member.equals("Lovelyz")) {   
+    if (member == null || member.toLowerCase().equals("lovelyz")) {   
 
       result = mDataResult;
 
@@ -52,15 +54,20 @@ public class Filter {
 
       for (int i = 0; i < mDataResult.dataCollections.size(); i++) {
 
-        boolean pass = false;
+        pass = false;
+        data = mDataResult.dataCollections.get(i);
 
-        for (String alias : aliases) {
+        for (String tag : data.tags) {
 
-          if (member.contains(alias)) {
+          for (String alias : aliases) {
 
-            pass = true;
+            if (tag.contains(alias)) {
+
+              pass = true;
             
-            break;
+              break 2;
+
+            }
 
           }
         
