@@ -171,6 +171,8 @@ public class DataRetriever {
 
     }
 
+    resultData.nextPointer = response.pointer;
+
     return resultData;
 
   }
