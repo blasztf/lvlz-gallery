@@ -59,10 +59,12 @@ public class Filter {
 
         tagloop:
         for (String tag : data.tags) {
+          
+          tag = tag.toLowerCase();
 
           for (String alias : aliases) {
 
-            if (tag.contains(alias)) {
+            if (tag.contains(alias.toLowerCase()) {
 
               pass = true;
             
