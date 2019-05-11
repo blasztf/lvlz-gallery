@@ -43,7 +43,7 @@ public class Filter {
 
     TagList<String> aliases = TagList.get(member);
 
-    if (member == null) {   
+    if (member == null || member.equals("lovelyz") || member.equals("Lovelyz")) {   
 
       result = mDataResult;
 

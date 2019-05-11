@@ -28,7 +28,7 @@ public class GalleryController {
 
     result = Filter.with(result).find(name);
 
-    return result;
+    return new Gallery(result);
 
   }
 

@@ -4,27 +4,33 @@ import java.util.ArrayList;
 
 public class Gallery {
 
-  private final long nextPointer;
-  private final String[] images;
+  private final ArrayList<Data> data;
+  private final long next_pointer;
+  private final int code_err;
 
-  public Gallery(long nextPointer, String[] images) {
+  public Gallery(DataResult result) {
 
-    this.nextPointer = nextPointer;
-    this.images = images;
+    this.data = result.dataCollections;
+    this.next_pointer = result.nextPointer;
+    this.code_err = result.codeErr;
 
   }
 
   public long getNextPointer() {
 
-    return nextPointer;
+    return next_pointer;
 
   }
 
-  public String[] getImages() {
+  public ArrayList<Data> getData() {
 
-    //String[] listImage = images.toArray(new String[images.size()]);
+    return data;
 
-    return images; //listImage;
+  }
+
+  public int getCodeErr() {
+
+    return code_err;
 
   }
 
