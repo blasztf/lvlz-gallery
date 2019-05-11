@@ -22,7 +22,7 @@ public class GalleryController {
   }
 
   @RequestMapping(method=RequestMethod.GET, path="/member/{name}")
-  public DataResult member(@PathVariable String name, @RequestParam(value="next_pointer", defaultValue="0") long nextPointer) {
+  public Gallery member(@PathVariable String name, @RequestParam(value="next_pointer", defaultValue="0") long nextPointer) {
     
     DataResult result = DataRetriever.with(nextPointer).retrieve();
 
