@@ -13,12 +13,14 @@ public class Gallery {
   private final List<DataResult.Data> data;
   private final long next_pointer;
   private final int code_err;
+  public String log;
 
-  public Gallery(DataResult result) {
+  public Gallery(DataResult result, String log) {
 
     this.data = result.dataCollections;
     this.next_pointer = result.nextPointer;
     this.code_err = result.codeErr;
+    this.log = log;
 
   }
 
