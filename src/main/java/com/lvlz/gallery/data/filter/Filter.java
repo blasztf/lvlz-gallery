@@ -41,7 +41,7 @@ public class Filter {
 
     DataResult result;
     boolean pass;
-    Data data;
+    DataResult.Data data;
 
     TagList<String> aliases = TagList.get(member);
 
