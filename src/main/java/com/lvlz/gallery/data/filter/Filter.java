@@ -64,7 +64,7 @@ public class Filter {
 
           for (String alias : aliases) {
 
-            if (tag.contains(alias.toLowerCase()) {
+            if (tag.contains(alias.toLowerCase())) {
 
               pass = true;
             
