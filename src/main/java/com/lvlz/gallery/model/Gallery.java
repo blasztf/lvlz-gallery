@@ -2,11 +2,11 @@ package com.lvlz.gallery.model;
 
 import com.lvlz.gallery.data.DataResult;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class Gallery {
 
-  private final ArrayList<DataResult.Data> data;
+  private final List<DataResult.Data> data;
   private final long next_pointer;
   private final int code_err;
 
@@ -24,7 +24,7 @@ public class Gallery {
 
   }
 
-  public ArrayList<DataResult.Data> getData() {
+  public List<DataResult.Data> getData() {
 
     return data;
 
