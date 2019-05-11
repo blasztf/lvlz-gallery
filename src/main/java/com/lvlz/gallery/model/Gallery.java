@@ -2,8 +2,12 @@ package com.lvlz.gallery.model;
 
 import com.lvlz.gallery.data.DataResult;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import java.util.List;
 
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class Gallery {
 
   private final List<DataResult.Data> data;
