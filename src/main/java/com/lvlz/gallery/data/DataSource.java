@@ -28,13 +28,13 @@ public class DataSource {
 
     mName = name;
 
-    setPointer(0L);
+    setPointer(0);
 
   }
 
   public DataSource setPointer(long pointer) {
 
-    if (pointer == 0L) {
+    if (pointer == 0) {
 
       url = PRIMARY.replace("{name}", mName.toLowerCase());
 
