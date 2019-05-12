@@ -45,7 +45,7 @@ public class Filter {
 
     TagList<String> aliases = TagList.get(member);
 
-    if (member == null || member.toLowerCase().equals("lovelyz")) {   
+    if (member == null || member.toLowerCase().equals("all") || member.toLowerCase().equals("lovelyz")) {   
 
       result = mDataResult;
 

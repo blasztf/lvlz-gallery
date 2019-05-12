@@ -43,7 +43,7 @@ public class DataSource {
     }
     else {
 
-      url = SECONDARY.replace("{name}", mName).replace("{max_pointer}", pointer + "");
+      url = SECONDARY.replace("{name}", mName).replace("{max_position}", pointer + "");
 
       type = TYPE_SECONDARY;
 
