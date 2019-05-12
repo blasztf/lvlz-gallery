@@ -115,7 +115,7 @@ public class DataRetriever {
 
       objResponse.content = (String) tweetData.get("items_html");
 
-      objResponse.pointer = ((Double) tweetData.get("min_position")).longValue();
+      objResponse.pointer = Long.parseLong(tweetData.get("min_position"));
 
     }
 
