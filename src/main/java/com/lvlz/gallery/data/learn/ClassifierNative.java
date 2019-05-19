@@ -29,11 +29,25 @@ public class ClassifierNative {
   private Net faceDetector;
   private Net model;
 
-  public ClassifierNative() {
+  private static ClassifierNative mInstance;
+
+  private ClassifierNative() {
 
     this.faceDetector = readNetFromCaffe(Asset.getPath("deploy.prototxt.txt"), Asset.getPath("res10_300x300_ssd_iter_140000.caffemodel"));
 
     this.model = readNetFromTensorflow(Asset.getPath("model.pb"), Asset.getPath("model.pbtxt"));
+
+  }
+
+  public static ClassifierNative load() {
+
+    if (mInstance == null) {
+
+      mInstance = new ClassifierNative();
+
+    }
+
+    return mInstance;
 
   }
 
@@ -45,7 +59,7 @@ public class ClassifierNative {
 
     for (Rect face : faces) {
 
-      rectangle(image, face, new Scalar(255, 0, 0, 0));
+      rectangle(image, face, new Scalar(255, 0, 0, 0), 2, LINE_8, 0);
 
     }
 
@@ -105,26 +119,26 @@ public class ClassifierNative {
 
     }
     
-    if (image.size(2) == 4) {
+    if (image.size(3) == 4) {
 
       cvtColor(image, image, COLOR_BGRA2BGR);
 
     }
 
-    if (max(image.size(0), image.size(1), image.size(2)) > maxpix) {
+    if (max(image.size(1), image.size(2), image.size(3)) > maxpix) {
 
-      if (image.size(0) > image.size(1)) {
-
-        shapeChange = maxpix / image.size(0);
-
-      }
-      else {
+      if (image.size(1) > image.size(2)) {
 
         shapeChange = maxpix / image.size(1);
 
       }
+      else {
 
-      resize(image, image, new Size(image.size(1) * shapeChange, image.size(0) * shapeChange));
+        shapeChange = maxpix / image.size(2);
+
+      }
+
+      resize(image, image, new Size(image.size(2) * shapeChange, image.size(1) * shapeChange));
 
     }
 
@@ -136,6 +150,8 @@ public class ClassifierNative {
 
   private List<Rect> detectFace(Mat image) {
 
+    Mat imageCopy = image.clone();
+
     Mat blob;
     Mat detections;
     Mat ne;
@@ -146,11 +162,11 @@ public class ClassifierNative {
 
     List<Rect> faces = new ArrayList<Rect>();
     
-    int h = 300; //image.size(1);
-    int w = 300; //image.size(2);
+    int h = image.rows();
+    int w = image.cols();
 
-    resize(image, image, new Size(300, 300)); 
-    blob = blobFromImage(image, 1.0, new Size(300, 300), new Scalar(104.0, 177.0, 123.0, 0), false, false, CV_32F);
+    resize(imageCopy, imageCopy, new Size(300, 300)); 
+    blob = blobFromImage(imageCopy, 1.0, new Size(300, 300), new Scalar(104.0, 177.0, 123.0, 0), false, false, CV_32F);
 
     this.faceDetector.setInput(blob);
     detections = this.faceDetector.forward();

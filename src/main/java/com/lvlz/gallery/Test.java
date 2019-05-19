@@ -13,7 +13,7 @@ public class Test {
 
    // OpenCVFrameConverter.ToIplImage converter = new OpenCVFrameConverter.ToIplImage();
 
-    Mat image = new ClassifierNative().detectAndDraw(args[0]);
+    Mat image = ClassifierNative.load().detectAndDraw(args[0]);
 
     //CanvasFrame frame = new CanvasFrame("Face Detection", CanvasFrame.getDefaultGamma() / 2.2);
 

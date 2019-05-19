@@ -1,4 +1,6 @@
 target/
+results/
+.cache/
 .env
 .classpath
 .project

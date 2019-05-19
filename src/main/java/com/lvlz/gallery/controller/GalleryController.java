@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.MediaType;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 
 import org.bytedeco.opencv.opencv_core.Mat;
 
@@ -30,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.bytedeco.javacpp.BytePointer;
 import java.io.IOException;
+import java.io.File;
 
 @RestController
 public class GalleryController {
@@ -55,22 +57,40 @@ public class GalleryController {
 
     DataResult result = getResult(name, nextPointer);
 
-    Mat image = new ClassifierNative().detectAndDraw(result.dataCollections.get(0).photos.get(0));
+    int rndData = (int) (Math.random() * result.dataCollections.size());
 
-    BytePointer pointer = new BytePointer();
-    byte[] buffer;
+    DataResult.Data data = result.dataCollections.get(rndData);
 
-    imencode(".jpg", image, pointer);
+    int rndPhoto = (int) (Math.random() * data.photos.size());
 
-    buffer = new byte[pointer.sizeof()];
-      
-    pointer.get(buffer);
+    Mat image = ClassifierNative.load().detectAndDraw(data.photos.get(rndPhoto));
 
-    response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+    //BytePointer pointer = new BytePointer();
+    //byte[] buffer;
+
+    File baseDir = new File(System.getProperty("user.dir") + File.separator + "results");
+
+    if (!baseDir.exists() || !baseDir.isDirectory()) {
+
+      baseDir.mkdirs();
+
+    }
+
+    String fileName = System.currentTimeMillis() + ".jpeg";
 
     try {
+
+      imwrite(baseDir.getCanonicalPath() + File.separator + fileName, image);
+
+      //imencode(".jpeg", image, pointer);
+
+      //buffer = new byte[pointer.sizeof()];
       
-      IOUtils.copy(new ByteArrayInputStream(buffer), response.getOutputStream());
+      //pointer.get(buffer);
+
+      response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+      
+      IOUtils.copy(FileUtils.openInputStream(new File(baseDir, fileName)), response.getOutputStream());
 
     }
     catch (IOException e) {

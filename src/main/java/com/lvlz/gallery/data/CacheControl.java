@@ -127,9 +127,9 @@ public class CacheControl {
 
     try {
 
-      if (expired()) {
+      mStoreFile = new File(mCacheBase, getName(pointer));
 
-        mStoreFile = new File(mCacheBase, getName(pointer));
+      if (expired()) {
 
         FileUtils.cleanDirectory(mCacheBase);
 
