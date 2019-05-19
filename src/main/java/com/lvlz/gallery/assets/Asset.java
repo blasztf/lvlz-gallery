@@ -1,81 +1,26 @@
 package com.lvlz.gallery.assets;
 
-import java.lang.Class;
+import java.io.File;
 
 public class Asset {
 
-  private static Asset mInstance;
+  private static final String ROOT_PATH = System.getProperty("user.dir") + File.separator + "assets";
 
-  private Class mClass;
+  public static String getPath(String name) {
 
-  private static void lazyLoad(Class clazz) {
-
-    if (mInstance == null) {
-
-      mInstance = new Asset();
-
-    }
-
-    if (clazz != null) {
-
-      mInstance.mClass = clazz;
-
-    }
-    else {
-
-      mInstance.mClass = mInstance.getClass();
-
-    }
+    return ROOT_PATH + File.separator + name;
 
   }
 
-  public static Asset with(Class clazz) {
+  public static String getPath(Class clazz, String name) {
 
-    lazyLoad(clazz);
-
-    return mInstance;
+    return ROOT_PATH + clazz.getPackage().getName().replaceAll("\\.", File.separator) + name;
 
   }
 
-  public static Asset with(Object obj) {
+  public static String getPath(Object obj, String name) {
 
-    lazyLoad(obj.getClass());
-
-    return mInstance;
-
-  }
-
-  public static String getPath(String path) {
-
-    lazyLoad(null);
-
-    return mInstance.getAssetPath(path);
-
-  }
-
-  private Asset() {
-
-  }
-
-  private Asset(Class clazz) {
-
-    mClass = clazz;
-  
-  }
-
-  private final void clear() {
-
-    mClass = null;
-
-  }
-
-  public String getAssetPath(String name) {
-
-    String path =  mClass.getResource(name).toString();
-
-    clear();
-
-    return path;
+    return getPath(obj.getClass(), name);
 
   }
 

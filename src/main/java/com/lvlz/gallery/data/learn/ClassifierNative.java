@@ -31,7 +31,7 @@ public class ClassifierNative {
 
   public ClassifierNative() {
 
-    this.faceDetector = readNetFromCaffe(Asset.getPath("deploy.prototxt.txt"), Asset.getPath("res10_300x300_ssd_iter_140000.cafemodel"));
+    this.faceDetector = readNetFromCaffe(Asset.getPath("deploy.prototxt.txt"), Asset.getPath("res10_300x300_ssd_iter_140000.caffemodel"));
 
     this.model = readNetFromTensorflow(Asset.getPath("model.pb"), Asset.getPath("model.pbtxt"));
 
@@ -146,8 +146,8 @@ public class ClassifierNative {
 
     List<Rect> faces = new ArrayList<Rect>();
     
-    int h = image.size(0);
-    int w = image.size(1);
+    int h = 300; //image.size(1);
+    int w = 300; //image.size(2);
 
     resize(image, image, new Size(300, 300)); 
     blob = blobFromImage(image, 1.0, new Size(300, 300), new Scalar(104.0, 177.0, 123.0, 0), false, false, CV_32F);
@@ -169,12 +169,12 @@ public class ClassifierNative {
 
       if (confidence > .5) {
 
-        tx = f1 * 300;
-        ty = f2 * 300;
-        bx = f3 * 300;
-        by = f4 * 300;
+        tx = f1 * w;
+        ty = f2 * h;
+        bx = f3 * w;
+        by = f4 * h;
 
-        faces.add(new Rect((int) tx, (int) ty, (int) bx, (int) by));
+        faces.add(new Rect((int) tx, (int) ty, (int) (bx - tx), (int) (by - ty)));
 
       }
 
