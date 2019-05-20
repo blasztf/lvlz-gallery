@@ -138,7 +138,7 @@ public class ClassifierNative {
 
       }
 
-      resize(image, image, new Size(image.size(2) * shapeChange, image.size(1) * shapeChange));
+      //resize(image, image, new Size(image.size(2) * shapeChange, image.size(1) * shapeChange));
 
     }
 
