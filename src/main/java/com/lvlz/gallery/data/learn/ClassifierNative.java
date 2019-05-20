@@ -143,7 +143,7 @@ public class ClassifierNative {
       newWidth = (double) (image.size(2) * shapeChange);
       newHeight = (double) (image.size(1) * shapeChange);
 
-      resize(image, image, new Size(newWidth, newHeight), newWidth / image.size(2), newHeight / image.size(1));
+      resize(image, image, new Size(newWidth, newHeight), newWidth / ((double) image.size(2)), newHeight / ((double) image.size(1)));
 
     }
 
