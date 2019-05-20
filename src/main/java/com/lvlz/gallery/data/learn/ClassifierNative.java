@@ -83,6 +83,8 @@ public class ClassifierNative {
 
   private Mat readImage(String imagePath) {
 
+    double newWidth, newHeight;
+
     int shapeChange;
     byte[] imBytes;
     Mat image;
@@ -138,7 +140,10 @@ public class ClassifierNative {
 
       }
 
-      //resize(image, image, new Size(image.size(2) * shapeChange, image.size(1) * shapeChange));
+      newWidth = (double) (image.size(2) * shapeChange);
+      newHeight = (double) (image.size(1) * shapeChange);
+
+      resize(image, image, new Size(newWidth, newHeight), newWidth / image.size(2), newHeight / image.size(1));
 
     }
 
