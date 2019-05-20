@@ -83,7 +83,7 @@ public class ClassifierNative {
 
   private Mat readImage(String imagePath) {
 
-    int newWidth, newHeight;
+    int width, height, newWidth, newHeight;
 
     int shapeChange;
     byte[] imBytes;
@@ -127,23 +127,26 @@ public class ClassifierNative {
 
     }
 
-    if (max(image.size(1), image.size(2), image.size(3)) > maxpix) {
+    width = image.cols();
+    height = image.rows();
 
-      if (image.size(1) > image.size(2)) {
+    if (max(width, height)) > maxpix) {
 
-        shapeChange = maxpix / image.size(1);
+      if (height > width) {
+
+        shapeChange = maxpix / height;
 
       }
       else {
 
-        shapeChange = maxpix / image.size(2);
+        shapeChange = maxpix / width;
 
       }
 
-      newWidth = image.size(2) * shapeChange;
-      newHeight = image.size(1) * shapeChange;
+      newWidth = width * shapeChange;
+      newHeight = height * shapeChange;
 
-    resize(image, image, new Size(newWidth, newHeight), (double) (newWidth / image.size(2)), (double) (newHeight / image.size(1)), INTER_LINEAR);
+      resize(image, image, new Size(newWidth, newHeight), (double) (newWidth / width), (double) (newHeight / height), INTER_LINEAR);
 
     }
 
