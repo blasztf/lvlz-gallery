@@ -130,7 +130,7 @@ public class ClassifierNative {
     width = image.cols();
     height = image.rows();
 
-    if (max(width, height)) > maxpix) {
+    if (max(width, height) > maxpix) {
 
       if (height > width) {
 
