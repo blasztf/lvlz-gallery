@@ -146,7 +146,9 @@ public class ClassifierNative {
       newWidth = width * shapeChange;
       newHeight = height * shapeChange;
 
-      resize(image, image, new Size(newWidth, newHeight), (double) (newWidth / width), (double) (newHeight / height), INTER_LINEAR);
+      // Weird behaviour
+      // Work on local, but not on heroku...
+      //resize(image, image, new Size(newWidth, newHeight), (double) (newWidth / width), (double) (newHeight / height), INTER_LINEAR);
 
     }
 
