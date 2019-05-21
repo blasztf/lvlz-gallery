@@ -53,6 +53,8 @@ public class ClassifierNative {
 
   public Mat detectAndDraw(String imagePath) {
 
+    Mat face, m;
+
     Mat image = readImage(imagePath);
 
     List<FaceRect> faces = detectFace(image);
@@ -63,6 +65,12 @@ public class ClassifierNative {
     int[] baseLine = new int[1];
 
     for (FaceRect face : faces) {
+
+      face = Mat.zeros(image.rows(), image.cols(), CV_32F);
+
+      m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1);
+
+      warpAffine(image, face, m, new Size(image.cols(), image.rows()));
 
       label = "Confidence : " + face.confidence;
       labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
