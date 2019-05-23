@@ -53,7 +53,7 @@ public class ClassifierNative {
 
   public Mat detectAndDraw(String imagePath) {
 
-    Mat face, m;
+    Mat faceRect, m;
 
     Mat image = readImage(imagePath);
 
@@ -66,11 +66,11 @@ public class ClassifierNative {
 
     for (FaceRect face : faces) {
 
-      face = Mat.zeros(image.rows(), image.cols(), CV_32F);
+      //faceRect = Mat.zeros(image.rows(), image.cols(), CV_32F);
 
-      m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1);
+      //m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1);
 
-      warpAffine(image, face, m, new Size(image.cols(), image.rows()));
+      //warpAffine(image, faceRect, m, new Size(image.cols(), image.rows()));
 
       label = "Confidence : " + face.confidence;
       labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
@@ -236,7 +236,6 @@ public class ClassifierNative {
 
   }
 
-  /*
   private Mat imAugmentAndBatch(Mat image) {
 
     Mat m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1); 
@@ -250,31 +249,44 @@ public class ClassifierNative {
     warpAffine(image, im3, mM, new Size(image.cols(), image.rows()));
     flip(image, im4, 1);
 
-    Mat batches = Mat.zeros(new Size(4, 224, 224, 3));
+    MatVector batches = new MatVector(new Mat(new int[] {4, 224, 224, 3}, CV_32F, Scalar.all(0)).ptr());
+
     batches.put(0, image);
     batches.put(1, im2);
     batches.put(2, im3);
     batches.put(3, im4);
-    batches = blobFromImages(batches, 1.0, new Size(224, 224), new Scalar(93.594, 104.7624, 129.1863), false, false, CV_32F);
 
-    return batches;
+    return  blobFromImages(batches, 1.0, new Size(224, 224), new Scalar(93.594, 104.7624, 129.1863, 0), false, false, CV_32F);
 
-  }*/
+  }
+
   /*
   private findFaceAndClassify(String filename) {
 
     Mat image = readImage(filename);
 
-    List<Rect> faces = detectFace(image);
+    List<FaceRect> faces = detectFace(image);
 
     String[] subjects = new String[] {"soul", "jiae", "jisoo", "mijoo", "kei", "jin", "sujeong", "yein"};
 
     Mat out = new Mat();
+    Mat im, batches, yProd, cors, e, wei;
 
     image.copyTo(out);
 
-    for (Rect face : faces) {
+    for (FaceRect face : faces) {
 
+    	im = new Mat(out, face.face);
+    	resize(im, im, new Size(224, 224));
+
+	batches = imAugmentAndBatch(im);
+
+	this.model.setInput(batches);
+	yProd = this.model.forward();
+
+	cors = new Mat(yprod);
+	matchTempalte(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
+	cors = Mat.eye(Mat.zeros(cors.rows(), cors.cols(), CV_32F));
     }
 
   }
