@@ -53,37 +53,62 @@ public class ClassifierNative {
 
   public Mat detectAndDraw(String imagePath) {
 
-    Mat faceRect, m;
+    Mat im, batches, yProd;
 
     Mat image = readImage(imagePath);
 
     List<FaceRect> faces = detectFace(image);
 
+    String[] subjects = new String[] {"Soul", "Jiae", "Jisoo", "Mijoo", "Kei", "Jin", "Sujeong", "Yein"};
+
     String label;
     Size labelSize;
-    
+   
+    Point textPosition; 
     int[] baseLine = new int[1];
 
     for (FaceRect face : faces) {
 
-      //faceRect = Mat.zeros(image.rows(), image.cols(), CV_32F);
+      im = new Mat(image, face.face);
+      resize(im, im, new Size(224, 224));
 
-      //m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1);
+      batches = imAugmentAndBatch(im);
 
-      //warpAffine(image, faceRect, m, new Size(image.cols(), image.rows()));
+      this.model.setInput(batches);
+      yProd = this.model.forward();
 
-      label = "Confidence : " + face.confidence;
-      labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
-
-      rectangle(image, new Point(face.face.x() - 10, face.face.y() - 10 - labelSize.height()), new Point(face.face.x() + labelSize.width(), face.face.y() + baseLine[0]), new Scalar(0, 255, 0, 0), FILLED, LINE_8, 0);
-
-      putText(image, label, new Point(face.face.x() - 10, face.face.y() - 10), FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0, 0, 255, 0));
+      yProd = recognize(yProd);
 
       rectangle(image, face.face, new Scalar(255, 0, 0, 0), 2, LINE_8, 0);
+      
+      //rectangle(image, new Point(face.face.x() - 10, face.face.y() - 10 - labelSize.height()), new Point(face.face.x() + labelSize.width(), face.face.y() + baseLine[0]), new Scalar(0, 255, 0, 0), FILLED, LINE_8, 0);
+      
+      textPosition = new Point(face.face.x() + face.face.width() + 10, face.face.y());
+      for (int i = 0; i < subjects.length; i++) {
+        
+        label = subjects[i] + " : " + yProd.data().getFloat((long) i);
+        labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
+      
+        putText(image, label, textPosition, FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0, 0, 255, 0));
+
+	textPosition = new Point(textPosition.x(), textPosition.y() + labelSize.height() + 10);
+
+      }
 
     }
 
     return image;
+
+  }
+
+  private Mat recognize(Mat yProd) {
+
+    Mat cors, e, wei;
+
+    cors = new Mat(yProd);
+    matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
+
+    return yProd;
 
   }
 
@@ -238,6 +263,7 @@ public class ClassifierNative {
 
   private Mat imAugmentAndBatch(Mat image) {
 
+    Mat im = image.clone();
     Mat m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1); 
     Mat mM = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), -10, 1);
 
@@ -245,20 +271,37 @@ public class ClassifierNative {
     Mat im3 = new Mat();
     Mat im4 = new Mat();
 
-    warpAffine(image, im2, m, new Size(image.cols(), image.rows()));
-    warpAffine(image, im3, mM, new Size(image.cols(), image.rows()));
-    flip(image, im4, 1);
+    warpAffine(im, im2, m, new Size(image.cols(), image.rows()));
+    warpAffine(im, im3, mM, new Size(image.cols(), image.rows()));
+    flip(im, im4, 1);
+
+    //im = im.dims(im.dims()+1);
+    //im2 = im2.dims(im2.dims()+1);
+    //im3 = im3.dims(im3.dims()+1);
+    //im4 = im4.dims(im4.dims()+1);
 
     MatVector batches = new MatVector(new Mat(new int[] {4, 224, 224, 3}, CV_32F, Scalar.all(0)).ptr());
 
-    batches.put(0, image);
+    /*batches.put(0, im);
     batches.put(1, im2);
     batches.put(2, im3);
-    batches.put(3, im4);
+    batches.put(3, im4);*/
 
-    return  blobFromImages(batches, 1.0, new Size(224, 224), new Scalar(93.594, 104.7624, 129.1863, 0), false, false, CV_32F);
+    batches.put(im, im2, im3, im4);
+
+    return blobFromImages(batches, 1.0, new Size(224, 224), new Scalar(93.594, 104.7624, 129.1863, 0), false, false, CV_32F);
 
   }
+
+  /*
+  private Mat cropImage(Mat image, Rect, rectCrop) {
+
+    Mat croppedImage = new Mat(image, rectCrop);
+
+    return croppedImage;
+
+  }
+  */
 
   /*
   private findFaceAndClassify(String filename) {
@@ -285,7 +328,7 @@ public class ClassifierNative {
 	yProd = this.model.forward();
 
 	cors = new Mat(yprod);
-	matchTempalte(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
+	matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
 	cors = Mat.eye(Mat.zeros(cors.rows(), cors.cols(), CV_32F));
     }
 

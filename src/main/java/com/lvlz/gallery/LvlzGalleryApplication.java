@@ -9,6 +9,8 @@ import org.springframework.context.annotation.ComponentScan;
 public class LvlzGalleryApplication {
 
 	public static void main(String[] args) {
+
+		new Test(args);
 		
     SpringApplication.run(LvlzGalleryApplication.class, args);
      
