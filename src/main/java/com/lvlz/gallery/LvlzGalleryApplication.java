@@ -10,9 +10,15 @@ public class LvlzGalleryApplication {
 
 	public static void main(String[] args) {
 
+      if (args.length > 0) {
+
 		new Test(args);
-		
-    SpringApplication.run(LvlzGalleryApplication.class, args);
+      }
+	  else {
+
+        SpringApplication.run(LvlzGalleryApplication.class, args);
+
+      }
      
 	}
 

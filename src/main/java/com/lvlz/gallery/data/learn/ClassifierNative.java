@@ -24,6 +24,8 @@ import static org.bytedeco.opencv.global.opencv_dnn.*;
 import static org.bytedeco.opencv.global.opencv_imgproc.*;
 import static org.bytedeco.opencv.global.opencv_imgcodecs.*;
 
+import static org.bytedeco.opencv.global.opencv_highgui.*;
+
 public class ClassifierNative {
 
   private Net faceDetector;
@@ -91,7 +93,7 @@ public class ClassifierNative {
       
         putText(image, label, textPosition, FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0, 0, 255, 0));
 
-	textPosition = new Point(textPosition.x(), textPosition.y() + labelSize.height() + 10);
+	    textPosition = new Point(textPosition.x(), textPosition.y() + labelSize.height() + 10);
 
       }
 
@@ -103,10 +105,19 @@ public class ClassifierNative {
 
   private Mat recognize(Mat yProd) {
 
-    Mat cors, e, wei;
+    Mat cors;
+    Mat e, e1;
+    Mat wei;
 
-    cors = new Mat(yProd);
+    cors = new Mat(yProd.cols(), yProd.rows(), CV_64F);
     matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
+
+    e = new Mat(sumElems(cors));
+    exp(e, e);
+    e1 = new Mat(sumElems(e));
+    wei = divide(e, e1).asMat();
+    System.out.println("Dims wei : " + wei.dims() + "\n\n");
+    gemm(yProd, wei.reshape(0, 1), 1, new Mat(), 0, yProd);
 
     return yProd;
 
@@ -261,9 +272,19 @@ public class ClassifierNative {
 
   }
 
-  private Mat imAugmentAndBatch(Mat image) {
+  private void saveImage(String name, Mat mat) {
 
-    Mat im = image.clone();
+      String path = "/home/mr/Projects/heroku-app/java/lvlz-gallery/mods/";
+
+      imwrite(path + name, mat);
+
+  }
+
+  private Mat imAugmentAndBatch(Mat image) {
+long currtime = System.currentTimeMillis();
+    Mat im = new Mat(image.cols(), image.rows(), CV_32F);
+    image.copyTo(im);
+
     Mat m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1); 
     Mat mM = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), -10, 1);
 
@@ -271,14 +292,21 @@ public class ClassifierNative {
     Mat im3 = new Mat();
     Mat im4 = new Mat();
 
-    warpAffine(im, im2, m, new Size(image.cols(), image.rows()));
-    warpAffine(im, im3, mM, new Size(image.cols(), image.rows()));
+    warpAffine(im, im2, m, im.size());
+    warpAffine(im, im3, mM, im.size());
     flip(im, im4, 1);
 
-    //im = im.dims(im.dims()+1);
-    //im2 = im2.dims(im2.dims()+1);
-    //im3 = im3.dims(im3.dims()+1);
-    //im4 = im4.dims(im4.dims()+1);
+    /*
+    im = im.reshape(0, im.dims()+1, im.size());
+    im2 = im2.reshape(0, im2.dims()+1, im2.size());
+    im3 = im3.reshape(0, im3.dims()+1, im3.size());
+    im4 = im4.reshape(0, im4.dims()+1, im4.size());
+    */
+
+    saveImage(currtime + "-im.jpeg", im);
+    saveImage(currtime + "-im2.jpeg", im2);
+    saveImage(currtime + "-im3.jpeg", im3);
+    saveImage(currtime + "-im4.jpeg", im4);
 
     MatVector batches = new MatVector(new Mat(new int[] {4, 224, 224, 3}, CV_32F, Scalar.all(0)).ptr());
 
