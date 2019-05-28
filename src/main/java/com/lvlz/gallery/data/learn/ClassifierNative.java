@@ -107,7 +107,7 @@ public class ClassifierNative {
 
     Mat cors;
     Mat e, e1;
-    Mat wei;
+    Mat wei,wei2;
 
     cors = new Mat(yProd.cols(), yProd.rows(), CV_64F);
     matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
@@ -116,8 +116,15 @@ public class ClassifierNative {
     exp(e, e);
     e1 = new Mat(sumElems(e));
     wei = divide(e, e1).asMat();
-    System.out.println("Dims wei : " + wei.dims() + "\n\n");
-    gemm(yProd, wei.reshape(0, 1), 1, new Mat(), 0, yProd);
+    //System.out.println("Dims wei : " + wei.dims() + "\n\n");
+    //gemm(yProd, wei.reshape(0, 1), 1, new Mat(), 0, yProd);
+    //wei = wei.reshape(0, new int[] {1, 1});
+    System.out.println("wei cols: " + wei.size().height());
+    wei2 = new Mat(new int[] {1,1}, CV_64F);
+    wei.copyTo(wei2);
+    //wei.convertTo(wei, CV_64F, 255.0/65536.0, 0);
+    System.out.println("wei2 type == CV_64F ? " + (wei2.type() == CV_64F ? "true" : "false"));
+    yProd = yProd.mul(wei2).asMat();
 
     return yProd;
 
