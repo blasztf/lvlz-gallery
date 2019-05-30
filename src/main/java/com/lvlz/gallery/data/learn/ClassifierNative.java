@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import org.bytedeco.javacpp.indexer.FloatIndexer;
+import org.bytedeco.javacpp.indexer.DoubleRawIndexer;
 
 import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_dnn.*;
@@ -57,7 +58,12 @@ public class ClassifierNative {
 
     Mat im, batches, yProd;
 
+    //DoubleRawIndexer  indexer;
+    float[] rates;
+
     Mat image = readImage(imagePath);
+
+    //image.convertTo(image, CV_32F, 255, 255);
 
     List<FaceRect> faces = detectFace(image);
 
@@ -79,7 +85,14 @@ public class ClassifierNative {
       this.model.setInput(batches);
       yProd = this.model.forward();
 
-      yProd = recognize(yProd);
+      rates = new float[yProd.cols()];
+
+      //double[] classProb = new double[subjects.length];
+      printNet(yProd, subjects);
+
+      rateFace(yProd, rates);
+      //yProd = recognize(yProd, yProd);
+      //indexer = yProd.createIndexer();
 
       rectangle(image, face.face, new Scalar(255, 0, 0, 0), 2, LINE_8, 0);
       
@@ -87,8 +100,7 @@ public class ClassifierNative {
       
       textPosition = new Point(face.face.x() + face.face.width() + 10, face.face.y());
       for (int i = 0; i < subjects.length; i++) {
-        
-        label = subjects[i] + " : " + yProd.data().getFloat((long) i);
+        label = subjects[i] + " : " + rates[i];
         labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
       
         putText(image, label, textPosition, FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0, 0, 255, 0));
@@ -103,30 +115,138 @@ public class ClassifierNative {
 
   }
 
-  private Mat recognize(Mat yProd) {
+  private void rateFace(Mat yProd, float[] result) {
+
+      FloatIndexer indexer = yProd.createIndexer();
+
+      float temp;
+
+      for (int j = 0; j < yProd.cols(); j++) {
+
+          temp = 0f;
+
+          for (int i = 0; i < yProd.rows(); i++) {
+
+              if (temp == 0f) { 
+               
+                  temp = indexer.get(i, j);
+
+              }
+              else {
+
+                  temp = Math.max(temp, indexer.get(i, j));
+
+              }
+
+          }
+
+          result[j] = temp;
+
+      }
+
+
+  }
+
+  private void printNet(Mat yProd, String[] subjects) {
+
+      echo("========================================");
+      echo("==           Print Y_PROD             ==");
+      echo("========================================");
+
+      echo("= cols : " + yProd.cols() + "         ==");
+      echo("= rows : " + yProd.rows() + "         ==");
+      echo("========================================");
+
+      FloatIndexer indexer = yProd.createIndexer();
+
+      for (int j = 0; j < yProd.cols(); j++) {
+
+          echo("member : " + subjects[j]);
+          echo(" ");
+
+          for (int i = 0; i < yProd.rows(); i++) {
+
+              echo("  col : " + j);
+              echo("  row : " + i);
+              echo("  val : " + indexer.get(i, j));
+              echo(" ");
+
+          }
+
+          echo("================================");
+
+      }
+
+  }
+
+  private Mat recognize(Mat yProd, double[] classProb, String[] subjects) {
+
+    //Mat cors = new Mat(yProd.cols(), yProd.rows(), CV_8U);
+    //matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
+    
+    Point classId = new Point();
+    //double[] classProb = new double[8];
+    Mat probMat = yProd;//.reshape(1, new int[] {-1, 1});
+    minMaxLoc(probMat, null, classProb, null, classId, null);
+
+    //echo("probMat cols : " + probMat.cols());
+    //echo("probMat rows : " + probMat.rows());
+    //echo("Best class   : #" + classId.x() + " => " + subjects[classId.x()]);
+
+    return probMat;
+  }
+
+
+  private Mat recognize(Mat src, Mat yProd) {
 
     Mat cors;
-    Mat e, e1;
-    Mat wei,wei2;
+    Mat cors0;
+    Mat e;
+    Mat wei;
 
-    cors = new Mat(yProd.cols(), yProd.rows(), CV_64F);
-    matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
+    cors = new Mat(yProd.cols(), yProd.rows(), CV_8U);
+    matchTemplate(src, yProd, cors, CV_TM_CCOEFF);
 
-    e = new Mat(sumElems(cors));
+    echoMat("cors", cors);
+
+    cors0 = multiply(Mat.eye(cors.size(), CV_8U), 1).asMat();
+
+    cors.setTo(new Mat(cors0.size(), cors0.type(), Scalar.all(0)), cors0);
+
+    e = new Mat(cors.size(), CV_32F, sumElems(cors));
     exp(e, e);
-    e1 = new Mat(sumElems(e));
-    wei = divide(e, e1).asMat();
-    //System.out.println("Dims wei : " + wei.dims() + "\n\n");
-    //gemm(yProd, wei.reshape(0, 1), 1, new Mat(), 0, yProd);
-    //wei = wei.reshape(0, new int[] {1, 1});
-    System.out.println("wei cols: " + wei.size().height());
-    wei2 = new Mat(new int[] {1,1}, CV_64F);
-    wei.copyTo(wei2);
-    //wei.convertTo(wei, CV_64F, 255.0/65536.0, 0);
-    System.out.println("wei2 type == CV_64F ? " + (wei2.type() == CV_64F ? "true" : "false"));
-    yProd = yProd.mul(wei2).asMat();
+    wei = divide(e, new Mat(e.size(), CV_32F, sumElems(e))).asMat();
+
+    echoMat("e", e);
+    echoMat("yProd", yProd);
+    echoMat("wei", wei);
+        
+
+    //yProd = multiply(yProd, wei).asMat();
+    //yProd = yProd.mul(wei.reshape(1, wei.cols() * wei.rows())).asMat();
+    gemm(yProd, wei.reshape(1, wei.cols() * wei.rows()), 0, new Mat(), 0, yProd);
+    yProd = new Mat(yProd.size(), CV_32F, sumElems(yProd));
+
+    echoMat("yProd", yProd);
+    echoMat("wei", wei);
 
     return yProd;
+
+  }
+
+  private void echoMat(String var, Mat mat) {
+
+      echo("============================");
+      echo(var + "  type = " + mat.type());
+      echo(var + "  cols = " + mat.cols());
+      echo(var + "  rows = " + mat.rows());
+      echo("============================");
+
+  }
+
+  private void echo(String str) {
+
+      System.out.println(str);
 
   }
 
@@ -266,7 +386,6 @@ public class ClassifierNative {
         bx = f3 * w;
         by = f4 * h;
 
-
         face = new FaceRect(confidence, (new Rect((int) tx, (int) ty, (int) (bx - tx), (int) (by - ty))));
 
         faces.add(face);
@@ -288,7 +407,7 @@ public class ClassifierNative {
   }
 
   private Mat imAugmentAndBatch(Mat image) {
-long currtime = System.currentTimeMillis();
+    
     Mat im = new Mat(image.cols(), image.rows(), CV_32F);
     image.copyTo(im);
 
@@ -310,11 +429,6 @@ long currtime = System.currentTimeMillis();
     im4 = im4.reshape(0, im4.dims()+1, im4.size());
     */
 
-    saveImage(currtime + "-im.jpeg", im);
-    saveImage(currtime + "-im2.jpeg", im2);
-    saveImage(currtime + "-im3.jpeg", im3);
-    saveImage(currtime + "-im4.jpeg", im4);
-
     MatVector batches = new MatVector(new Mat(new int[] {4, 224, 224, 3}, CV_32F, Scalar.all(0)).ptr());
 
     /*batches.put(0, im);
@@ -328,45 +442,4 @@ long currtime = System.currentTimeMillis();
 
   }
 
-  /*
-  private Mat cropImage(Mat image, Rect, rectCrop) {
-
-    Mat croppedImage = new Mat(image, rectCrop);
-
-    return croppedImage;
-
-  }
-  */
-
-  /*
-  private findFaceAndClassify(String filename) {
-
-    Mat image = readImage(filename);
-
-    List<FaceRect> faces = detectFace(image);
-
-    String[] subjects = new String[] {"soul", "jiae", "jisoo", "mijoo", "kei", "jin", "sujeong", "yein"};
-
-    Mat out = new Mat();
-    Mat im, batches, yProd, cors, e, wei;
-
-    image.copyTo(out);
-
-    for (FaceRect face : faces) {
-
-    	im = new Mat(out, face.face);
-    	resize(im, im, new Size(224, 224));
-
-	batches = imAugmentAndBatch(im);
-
-	this.model.setInput(batches);
-	yProd = this.model.forward();
-
-	cors = new Mat(yprod);
-	matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
-	cors = Mat.eye(Mat.zeros(cors.rows(), cors.cols(), CV_32F));
-    }
-
-  }
-  */
 }
