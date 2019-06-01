@@ -22,16 +22,20 @@ public class TestApp extends Application {
 
   }
 
-  public static void testImage(String imPath) {
+  public static void testImage(String imPath, String detectorText) {
+
+    int detector = (detectorText.equals("haar") ? ClassifierNative.DETECTOR_HAAR : ClassifierNative.DETECTOR_DNN);
 
     String windowId = "Lovelyz Face Recognition - " + imPath;
-    Mat image = ClassifierNative.load().detectAndDraw(imPath);
+    Mat image = ClassifierNative.load(detector).detectAndDraw(imPath);
 
     namedWindow(windowId, CV_WINDOW_AUTOSIZE);
 
     imshow(windowId, image);
 
     waitKey(0);
+
+    destroyAllWindows();
 
   }
 
@@ -53,7 +57,7 @@ public class TestApp extends Application {
         File selectedFile = fileChooser.showOpenDialog(primaryStage);
         if (selectedFile != null && selectedFile.isFile()) {
 
-          testImage(selectedFile.getAbsolutePath());
+          testImage(selectedFile.getAbsolutePath(), "");
 
         }
 

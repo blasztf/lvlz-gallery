@@ -9,18 +9,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import org.bytedeco.javacpp.indexer.FloatIndexer;
-import org.bytedeco.javacpp.indexer.DoubleIndexer;
-import org.bytedeco.javacpp.indexer.UByteIndexer;
-import org.bytedeco.javacpp.indexer.Indexer;
 
 import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_dnn.*;
 import org.bytedeco.opencv.opencv_imgproc.*;
+import org.bytedeco.opencv.opencv_objdetect.*;
 
 import static org.bytedeco.opencv.global.opencv_core.*;
 import static org.bytedeco.opencv.global.opencv_dnn.*;
@@ -31,12 +30,20 @@ import static org.bytedeco.opencv.global.opencv_highgui.*;
 
 public class ClassifierNative {
 
+  private CascadeClassifier faceCascade;
   private Net faceDetector;
   private Net model;
+
+  private int detector;
+
+  public static final int DETECTOR_DNN = 1;
+  public static final int DETECTOR_HAAR = 2;
 
   private static ClassifierNative mInstance;
 
   private ClassifierNative() {
+
+    this.faceCascade = new CascadeClassifier(Asset.getPath("haarcascade_frontalface_default.xml"));
 
     this.faceDetector = readNetFromCaffe(Asset.getPath("deploy.prototxt.txt"), Asset.getPath("res10_300x300_ssd_iter_140000.caffemodel"));
 
@@ -46,11 +53,19 @@ public class ClassifierNative {
 
   public static ClassifierNative load() {
 
+    return load(DETECTOR_DNN);
+
+  }
+
+  public static ClassifierNative load(int detector) {
+
     if (mInstance == null) {
 
       mInstance = new ClassifierNative();
 
     }
+
+    mInstance.detector = detector;
 
     return mInstance;
 
@@ -60,14 +75,27 @@ public class ClassifierNative {
 
     Mat im, batches, yProd;
 
-    FloatIndexer  indexer;
-    float[] rates;
+    FloatIndexer indexer;
 
     Mat image = readImage(imagePath);
+// double scale = 640 / image.cols();
+resize(image, image, new Size(), 0.50, 0.50, CV_INTER_AREA);
+    List<FaceRect> faces;
 
-    //image.convertTo(image, CV_32F, 255, 255);
+    switch (detector) {
 
-    List<FaceRect> faces = detectFace(image);
+      case DETECTOR_DNN:
+      
+        faces = detectFace(image);  
+      
+      break;
+      
+      case DETECTOR_HAAR: default:
+      
+        faces = detectFaceHaar(image);
+      
+      break;
+    }
 
     String[] subjects = new String[] {"Soul", "Jiae", "Jisoo", "Mijoo", "Kei", "Jin", "Sujeong", "Yein"};
 
@@ -78,7 +106,7 @@ public class ClassifierNative {
     int[] baseLine = new int[1];
 
     for (FaceRect face : faces) {
-
+CvHelper.printRect(face.face);
       im = new Mat(image, face.face);
       resize(im, im, new Size(224, 224));
 
@@ -87,14 +115,12 @@ public class ClassifierNative {
       this.model.setInput(batches);
       yProd = this.model.forward();
 
-      rates = new float[yProd.cols()];
+      CvHelper.printMat(yProd, "Y_PROD_BEFORE");
 
-      //double[] classProb = new double[subjects.length];
-      printNet2(yProd, "Y_PROD_BEFORE");
+      yProd = recognize(yProd);
 
-      //rateFace(yProd, rates);
-      yProd = recognize(yProd, yProd);
-      printNet2(yProd, "Y_PROD AFTER");
+      CvHelper.printMat(yProd, "Y_PROD AFTER");
+      
       indexer = yProd.createIndexer();
 
       rectangle(image, face.face, new Scalar(255, 0, 0, 0), 2, LINE_8, 0);
@@ -102,13 +128,15 @@ public class ClassifierNative {
       //rectangle(image, new Point(face.face.x() - 10, face.face.y() - 10 - labelSize.height()), new Point(face.face.x() + labelSize.width(), face.face.y() + baseLine[0]), new Scalar(0, 255, 0, 0), FILLED, LINE_8, 0);
       
       textPosition = new Point(face.face.x() + face.face.width() + 10, face.face.y());
+      
       for (int i = 0; i < subjects.length; i++) {
+        
         label = subjects[i] + " : " + String.format("%.4f", indexer.get(i));
         labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
       
         putText(image, label, textPosition, FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0, 0, 255, 0));
 
-	    textPosition = new Point(textPosition.x(), textPosition.y() + labelSize.height() + 10);
+        textPosition = new Point(textPosition.x(), textPosition.y() + labelSize.height() + 10);
 
       }
 
@@ -118,187 +146,37 @@ public class ClassifierNative {
 
   }
 
-  private void rateFace(Mat yProd, float[] result) {
-
-      FloatIndexer indexer = yProd.createIndexer();
-
-      float temp;
-
-      for (int j = 0; j < yProd.cols(); j++) {
-
-          temp = 0f;
-
-          for (int i = 0; i < yProd.rows(); i++) {
-
-              if (temp == 0f) { 
-               
-                  temp = indexer.get(i, j);
-
-              }
-              else {
-
-                  temp = Math.max(temp, indexer.get(i, j));
-
-              }
-
-          }
-
-          result[j] = temp;
-
-      }
-
-
-  }
-
-  private void printNet2(Mat mat, String title) {
-
-    Indexer indexer = mat.createIndexer();
-
-    String el;
-
-    echo(title);
-
-    echo("cols : " + mat.cols());
-    echo("rows : " + mat.rows());
-    echo("[");
-
-    for (int i = 0; i < mat.rows(); i++) {
-
-        //echo("member : " + subjects[j]);
-        //echo(" ");
-        el = " [";
-        for (int j = 0; j < mat.cols(); j++) {
-
-          if (indexer instanceof DoubleIndexer) {
-            el += ((DoubleIndexer) indexer).get(i, j);
-          }
-          else if (indexer instanceof FloatIndexer) {
-            el += ((FloatIndexer) indexer).get(i, j);
-          }
-          else if (indexer instanceof UByteIndexer) {
-            el += ((UByteIndexer) indexer).get(i, j);
-          }
-            el += " ";
-
-            //echo("  col : " + j);
-            //echo("  row : " + i);
-            //echo("  val : " + (indexer instanceof DoubleIndexer ? ((DoubleIndexer) indexer).get(i, j) : ((FloatIndexer) indexer).get(i, j)));
-            //echo(" ");
-
-        }
-        el += "] ";
-
-        echo(el);
-
-    }
-
-    echo("]\n");
-
-  }
-
-  private void printNet(Mat yProd, String subjects) {
-
-      echo("========================================");
-      echo("==          " + subjects + "          ==");
-      echo("========================================");
-
-      echo("= cols : " + yProd.cols() + "         ==");
-      echo("= rows : " + yProd.rows() + "         ==");
-      echo("========================================");
-
-      Indexer indexer = yProd.createIndexer();
-
-      for (int j = 0; j < yProd.cols(); j++) {
-
-          //echo("member : " + subjects[j]);
-          //echo(" ");
-
-          for (int i = 0; i < yProd.rows(); i++) {
-
-              echo("  col : " + j);
-              echo("  row : " + i);
-              echo("  val : " + (indexer instanceof DoubleIndexer ? ((DoubleIndexer) indexer).get(i, j) : ((FloatIndexer) indexer).get(i, j)));
-              echo(" ");
-
-          }
-
-          echo("================================");
-
-      }
-
-  }
-
-  private Mat recognize(Mat yProd, double[] classProb, String[] subjects) {
-
-    //Mat cors = new Mat(yProd.cols(), yProd.rows(), CV_8U);
-    //matchTemplate(yProd, yProd, cors, CV_TM_CCOEFF_NORMED);
-    
-    Point classId = new Point();
-    //double[] classProb = new double[8];
-    Mat probMat = yProd;//.reshape(1, new int[] {-1, 1});
-    minMaxLoc(probMat, null, classProb, null, classId, null);
-
-    //echo("probMat cols : " + probMat.cols());
-    //echo("probMat rows : " + probMat.rows());
-    //echo("Best class   : #" + classId.x() + " => " + subjects[classId.x()]);
-
-    return probMat;
-  }
-
-  private void fillDiagonal(Mat mat, double d) {
-
-    Mat mask = Mat.eye(mat.size(), CV_8UC1).alpha(1).asMat();
-    mat.setTo(new Mat(Scalar.all(d)), mask);
-
-  }
-
-  // private Mat sumElems1(Mat mat) {
-
-  //   assert (mat.cols() == 4 || mat.cols() == 1) : "Mat cols must be 4 or 1";
-
-
-
-  // }
-
-  private Mat recognize(Mat src, Mat yProd) {
+  private Mat recognize(Mat yProd) {
 
     Mat covar, mean;
-    Mat cors, cors0;
-    Mat corsMask;
     Mat e;
     Mat wei;
 
     //cors = new Mat(yProd.cols(), yProd.rows(), CV_8U);
-    cors = new Mat();
+    covar = new Mat();
     mean = new Mat();
 
-    calcCovarMatrix(yProd, cors, mean, CV_COVAR_ROWS | CV_COVAR_SCRAMBLED);
+    calcCovarMatrix(yProd, covar, mean, CV_COVAR_ROWS | CV_COVAR_SCRAMBLED);
     //matchTemplate(src, yProd, cors, CV_TM_CCOEFF);
 
-    //echoMat("cors", cors);
-    //
-    printNet2(cors, "CORS");
+    CvHelper.printMat(covar, "COVAR");
 
-    fillDiagonal(cors, 0);
+    CvHelper.fillDiagonal(covar, 0);
 
-    printNet2(cors, "CORS_FILL_DIAGONAL_0");
+    CvHelper.printMat(covar, "COVAR_FILL_DIAGONAL_0");
 
     e = new Mat();
 
-    reduce(cors, e, 0, CV_REDUCE_SUM);
+    reduce(covar, e, 0, CV_REDUCE_SUM);
 
     exp(e, e);
 
-    printNet2(e, "E");
+    CvHelper.printMat(e, "E");
 
     wei = divide(e, sumElems(e).get(0)).asMat();
 
-    printNet2(wei, "WEI");
-    printNet2(wei.reshape(1, wei.cols() * wei.rows()), "WEI_RESHAPE");
-    //echoMat("e", e);
-    //echoMat("yProd", yProd);
-    //echoMat("wei", wei);
-        
+    CvHelper.printMat(wei, "WEI");
+    CvHelper.printMat(wei.reshape(1, wei.cols() * wei.rows()), "WEI_RESHAPE");
 
     //yProd = multiply(yProd, wei).asMat();
     yProd = yProd.mul(wei.reshape(1, wei.cols() * wei.rows())).asMat();
@@ -307,26 +185,7 @@ public class ClassifierNative {
 
     //yProd = new Mat(yProd.size(), CV_64F, sumElems(yProd));
 
-    //echoMat("yProd", yProd);
-    //echoMat("wei", wei);
-
     return yProd;
-
-  }
-
-  private void echoMat(String var, Mat mat) {
-
-      echo("============================");
-      echo(var + "  type = " + mat.type());
-      echo(var + "  cols = " + mat.cols());
-      echo(var + "  rows = " + mat.rows());
-      echo("============================");
-
-  }
-
-  private void echo(String str) {
-
-      System.out.println(str);
 
   }
 
@@ -421,6 +280,38 @@ public class ClassifierNative {
 
   }
 
+  private List<FaceRect> detectFaceHaar(Mat image) {
+
+    Rect faceRect;
+
+    Mat imageCopy = image.clone();
+
+    // resize(imageCopy, imageCopy, new Size(300, 300));
+    // cvtColor(imageCopy, imageCopy, COLOR_BGRA2BGR);
+
+    RectVector faceVector = new RectVector();
+
+    List<FaceRect> faces = new ArrayList<FaceRect>();
+
+    this.faceCascade.detectMultiScale(imageCopy, faceVector);
+
+    for (int i = 0; i < faceVector.size(); i++) {
+
+      faceRect = faceVector.get(i);
+
+      // faceRect.tl().x(faceRect.x());
+      // faceRect.tl().y(faceRect.y());
+      // faceRect.br().x(faceRect.x() + faceRect.width());
+      // faceRect.br().y(faceRect.y() + faceRect.height());
+
+      faces.add(new FaceRect(1, new Rect(faceRect.x(), faceRect.y(), faceRect.width(), faceRect.height())));
+
+    }
+
+    return faces;
+
+  }
+
   private List<FaceRect> detectFace(Mat image) {
 
     Mat imageCopy = image.clone();
@@ -431,16 +322,18 @@ public class ClassifierNative {
 
     FloatIndexer srcIndexer;
 
-    float confidence, f1, f2, f3, f4, tx, ty, bx, by;
+    float confidence, f1, f2, f3, f4, tx, ty, bx, by, sx, sy;
 
     List<FaceRect> faces = new ArrayList<FaceRect>();
 
     FaceRect face;
     
-    int h = image.rows();
-    int w = image.cols();
+    int h = imageCopy.rows();
+    int w = imageCopy.cols();
 
     resize(imageCopy, imageCopy, new Size(300, 300)); 
+    cvtColor(imageCopy, imageCopy, COLOR_BGRA2BGR);
+    
     blob = blobFromImage(imageCopy, 1.0, new Size(300, 300), new Scalar(104.0, 177.0, 123.0, 0), false, false, CV_32F);
 
     this.faceDetector.setInput(blob);
@@ -466,7 +359,28 @@ public class ClassifierNative {
         bx = f3 * w;
         by = f4 * h;
 
-        face = new FaceRect(confidence, (new Rect((int) tx, (int) ty, (int) (bx - tx), (int) (by - ty))));
+        sx = bx - tx;
+        sy = by - ty;
+
+        // sx = sy = (sx + sy) / 2;
+
+        if (sx > sy) {
+
+          sy = sx;
+          ty -= ty * 0.1;
+
+        }
+        else {
+
+          sx = sy;
+          tx -= tx * 0.1;
+
+        }
+
+        // tx += sx * 0.2;
+        // ty += sy * 0.2;
+
+        face = new FaceRect(confidence, new Rect((int) tx, (int) ty, (int) sx, (int) sy));
 
         faces.add(face);
 
@@ -481,7 +395,7 @@ public class ClassifierNative {
   private void saveImage(String name, Mat mat) {
 
       String path = "/home/mr/Projects/heroku-app/java/lvlz-gallery/mods/";
-
+  
       imwrite(path + name, mat);
 
   }

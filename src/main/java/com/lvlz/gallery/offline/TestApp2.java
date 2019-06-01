@@ -10,7 +10,7 @@ public class TestApp2 {
 
   public static class MainFrame extends JFrame {
 
-    public MainFrame() {
+    public MainFrame(final String arg) {
 
       setTitle("Lovelyz Classifier");
       setSize(300, 300);
@@ -26,11 +26,11 @@ public class TestApp2 {
 
           JFileChooser fileChooser = new JFileChooser();
           fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-          int result = fileChooser.showOpenDialog(MainFrame.this);
+          int result = fileChooser.showOpenDialog(null);
 
           if (result == JFileChooser.APPROVE_OPTION) {
 
-            TestApp.testImage(fileChooser.getSelectedFile().getAbsolutePath());
+            TestApp.testImage(fileChooser.getSelectedFile().getAbsolutePath(), arg);
 
           }
 
@@ -47,14 +47,14 @@ public class TestApp2 {
 
   }
 
-  public TestApp2(String[] args) {
+  public TestApp2(final String[] args) {
 
     SwingUtilities.invokeLater(new Runnable() {
 
       @Override
       public void run() {
 
-       MainFrame ex = new MainFrame();
+       MainFrame ex = new MainFrame((args.length > 0 ? args[0] : ""));
        ex.setVisible(true);
 
       }
