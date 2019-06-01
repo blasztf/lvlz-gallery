@@ -1,5 +1,7 @@
 package com.lvlz.gallery;
 
+import com.lvlz.gallery.offline.TestApp2;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -12,7 +14,8 @@ public class LvlzGalleryApplication {
 
       if (args.length > 0) {
 
-		new Test(args);
+		    new TestApp2(args);
+
       }
 	  else {
 

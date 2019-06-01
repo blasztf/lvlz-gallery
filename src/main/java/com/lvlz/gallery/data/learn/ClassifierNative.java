@@ -14,7 +14,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import org.bytedeco.javacpp.indexer.FloatIndexer;
-import org.bytedeco.javacpp.indexer.DoubleRawIndexer;
+import org.bytedeco.javacpp.indexer.DoubleIndexer;
+import org.bytedeco.javacpp.indexer.UByteIndexer;
+import org.bytedeco.javacpp.indexer.Indexer;
 
 import org.bytedeco.opencv.opencv_core.*;
 import org.bytedeco.opencv.opencv_dnn.*;
@@ -58,7 +60,7 @@ public class ClassifierNative {
 
     Mat im, batches, yProd;
 
-    //DoubleRawIndexer  indexer;
+    FloatIndexer  indexer;
     float[] rates;
 
     Mat image = readImage(imagePath);
@@ -88,11 +90,12 @@ public class ClassifierNative {
       rates = new float[yProd.cols()];
 
       //double[] classProb = new double[subjects.length];
-      printNet(yProd, subjects);
+      printNet2(yProd, "Y_PROD_BEFORE");
 
-      rateFace(yProd, rates);
-      //yProd = recognize(yProd, yProd);
-      //indexer = yProd.createIndexer();
+      //rateFace(yProd, rates);
+      yProd = recognize(yProd, yProd);
+      printNet2(yProd, "Y_PROD AFTER");
+      indexer = yProd.createIndexer();
 
       rectangle(image, face.face, new Scalar(255, 0, 0, 0), 2, LINE_8, 0);
       
@@ -100,7 +103,7 @@ public class ClassifierNative {
       
       textPosition = new Point(face.face.x() + face.face.width() + 10, face.face.y());
       for (int i = 0; i < subjects.length; i++) {
-        label = subjects[i] + " : " + rates[i];
+        label = subjects[i] + " : " + String.format("%.4f", indexer.get(i));
         labelSize = getTextSize(label, FONT_HERSHEY_SIMPLEX, 0.5, 1, baseLine);
       
         putText(image, label, textPosition, FONT_HERSHEY_SIMPLEX, 0.5, new Scalar(0, 0, 255, 0));
@@ -147,28 +150,74 @@ public class ClassifierNative {
 
   }
 
-  private void printNet(Mat yProd, String[] subjects) {
+  private void printNet2(Mat mat, String title) {
+
+    Indexer indexer = mat.createIndexer();
+
+    String el;
+
+    echo(title);
+
+    echo("cols : " + mat.cols());
+    echo("rows : " + mat.rows());
+    echo("[");
+
+    for (int i = 0; i < mat.rows(); i++) {
+
+        //echo("member : " + subjects[j]);
+        //echo(" ");
+        el = " [";
+        for (int j = 0; j < mat.cols(); j++) {
+
+          if (indexer instanceof DoubleIndexer) {
+            el += ((DoubleIndexer) indexer).get(i, j);
+          }
+          else if (indexer instanceof FloatIndexer) {
+            el += ((FloatIndexer) indexer).get(i, j);
+          }
+          else if (indexer instanceof UByteIndexer) {
+            el += ((UByteIndexer) indexer).get(i, j);
+          }
+            el += " ";
+
+            //echo("  col : " + j);
+            //echo("  row : " + i);
+            //echo("  val : " + (indexer instanceof DoubleIndexer ? ((DoubleIndexer) indexer).get(i, j) : ((FloatIndexer) indexer).get(i, j)));
+            //echo(" ");
+
+        }
+        el += "] ";
+
+        echo(el);
+
+    }
+
+    echo("]\n");
+
+  }
+
+  private void printNet(Mat yProd, String subjects) {
 
       echo("========================================");
-      echo("==           Print Y_PROD             ==");
+      echo("==          " + subjects + "          ==");
       echo("========================================");
 
       echo("= cols : " + yProd.cols() + "         ==");
       echo("= rows : " + yProd.rows() + "         ==");
       echo("========================================");
 
-      FloatIndexer indexer = yProd.createIndexer();
+      Indexer indexer = yProd.createIndexer();
 
       for (int j = 0; j < yProd.cols(); j++) {
 
-          echo("member : " + subjects[j]);
-          echo(" ");
+          //echo("member : " + subjects[j]);
+          //echo(" ");
 
           for (int i = 0; i < yProd.rows(); i++) {
 
               echo("  col : " + j);
               echo("  row : " + i);
-              echo("  val : " + indexer.get(i, j));
+              echo("  val : " + (indexer instanceof DoubleIndexer ? ((DoubleIndexer) indexer).get(i, j) : ((FloatIndexer) indexer).get(i, j)));
               echo(" ");
 
           }
@@ -196,39 +245,70 @@ public class ClassifierNative {
     return probMat;
   }
 
+  private void fillDiagonal(Mat mat, double d) {
+
+    Mat mask = Mat.eye(mat.size(), CV_8UC1).alpha(1).asMat();
+    mat.setTo(new Mat(Scalar.all(d)), mask);
+
+  }
+
+  // private Mat sumElems1(Mat mat) {
+
+  //   assert (mat.cols() == 4 || mat.cols() == 1) : "Mat cols must be 4 or 1";
+
+
+
+  // }
 
   private Mat recognize(Mat src, Mat yProd) {
 
-    Mat cors;
-    Mat cors0;
+    Mat covar, mean;
+    Mat cors, cors0;
+    Mat corsMask;
     Mat e;
     Mat wei;
 
-    cors = new Mat(yProd.cols(), yProd.rows(), CV_8U);
-    matchTemplate(src, yProd, cors, CV_TM_CCOEFF);
+    //cors = new Mat(yProd.cols(), yProd.rows(), CV_8U);
+    cors = new Mat();
+    mean = new Mat();
 
-    echoMat("cors", cors);
+    calcCovarMatrix(yProd, cors, mean, CV_COVAR_ROWS | CV_COVAR_SCRAMBLED);
+    //matchTemplate(src, yProd, cors, CV_TM_CCOEFF);
 
-    cors0 = multiply(Mat.eye(cors.size(), CV_8U), 1).asMat();
+    //echoMat("cors", cors);
+    //
+    printNet2(cors, "CORS");
 
-    cors.setTo(new Mat(cors0.size(), cors0.type(), Scalar.all(0)), cors0);
+    fillDiagonal(cors, 0);
 
-    e = new Mat(cors.size(), CV_32F, sumElems(cors));
+    printNet2(cors, "CORS_FILL_DIAGONAL_0");
+
+    e = new Mat();
+
+    reduce(cors, e, 0, CV_REDUCE_SUM);
+
     exp(e, e);
-    wei = divide(e, new Mat(e.size(), CV_32F, sumElems(e))).asMat();
 
-    echoMat("e", e);
-    echoMat("yProd", yProd);
-    echoMat("wei", wei);
+    printNet2(e, "E");
+
+    wei = divide(e, sumElems(e).get(0)).asMat();
+
+    printNet2(wei, "WEI");
+    printNet2(wei.reshape(1, wei.cols() * wei.rows()), "WEI_RESHAPE");
+    //echoMat("e", e);
+    //echoMat("yProd", yProd);
+    //echoMat("wei", wei);
         
 
     //yProd = multiply(yProd, wei).asMat();
-    //yProd = yProd.mul(wei.reshape(1, wei.cols() * wei.rows())).asMat();
-    gemm(yProd, wei.reshape(1, wei.cols() * wei.rows()), 0, new Mat(), 0, yProd);
-    yProd = new Mat(yProd.size(), CV_32F, sumElems(yProd));
+    yProd = yProd.mul(wei.reshape(1, wei.cols() * wei.rows())).asMat();
+    reduce(yProd, yProd, 0, CV_REDUCE_SUM);
+    //gemm(yProd, wei.reshape(1, wei.cols() * wei.rows()), 0, new Mat(), 0, yProd);
 
-    echoMat("yProd", yProd);
-    echoMat("wei", wei);
+    //yProd = new Mat(yProd.size(), CV_64F, sumElems(yProd));
+
+    //echoMat("yProd", yProd);
+    //echoMat("wei", wei);
 
     return yProd;
 
@@ -411,8 +491,8 @@ public class ClassifierNative {
     Mat im = new Mat(image.cols(), image.rows(), CV_32F);
     image.copyTo(im);
 
-    Mat m = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), 10, 1); 
-    Mat mM = getRotationMatrix2D(new Point2f(image.cols() / 2, image.rows() / 2), -10, 1);
+    Mat m = getRotationMatrix2D(new Point2f(im.cols() / 2, im.rows() / 2), 10, 1); 
+    Mat mM = getRotationMatrix2D(new Point2f(im.cols() / 2, im.rows() / 2), -10, 1);
 
     Mat im2 = new Mat();
     Mat im3 = new Mat();
